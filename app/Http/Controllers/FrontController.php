@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\About;
 use App\Models\Client;
 use App\Models\Galeri;
 use App\Models\Inbox;
@@ -73,13 +74,15 @@ class FrontController extends Controller
 
     public function client()
     {
+        $title = 'Client';
         $clients = Client::all();
         return view('front.client', compact('title', 'clients'));
     }
 
     public function contact()
     {
-        return view('front.contact');
+        $title = 'Contact';
+        return view('front.contact', compact('title'));
     }
 
     public function inbox(Request $request)

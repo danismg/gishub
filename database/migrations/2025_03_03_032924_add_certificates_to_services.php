@@ -11,12 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('partners', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('image');
-            $table->softDeletes();
-            $table->timestamps();
+        Schema::table('services', function (Blueprint $table) {
+            $table->string('certificate')->nullable();
+            $table->string('code')->nullable();
         });
     }
 
@@ -25,6 +22,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('partners');
+        Schema::table('services', function (Blueprint $table) {
+            //
+        });
     }
 };

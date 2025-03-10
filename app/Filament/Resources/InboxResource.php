@@ -48,8 +48,7 @@ class InboxResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('subject')
                     ->searchable(),
-                Tables\Columns\IconColumn::make('is_read')
-                    ->boolean(),
+                Tables\Columns\ToggleColumn::make('is_read'),
                 Tables\Columns\TextColumn::make('deleted_at')
                     ->dateTime()
                     ->sortable()

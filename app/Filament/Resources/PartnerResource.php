@@ -6,6 +6,7 @@ use App\Filament\Resources\PartnerResource\Pages;
 use App\Filament\Resources\PartnerResource\RelationManagers;
 use App\Models\Partner;
 use Filament\Forms;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -17,6 +18,10 @@ class PartnerResource extends Resource
 {
     protected static ?string $model = Partner::class;
 
+    protected static ?string $navigationGroup = 'Management';
+
+    protected static ?string $navigationLabel = 'Our Partners';
+
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     public static function form(Form $form): Form
@@ -26,9 +31,19 @@ class PartnerResource extends Resource
                 Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255),
+
+                TextInput::make('link')
+                    ->required(),
+
                 Forms\Components\FileUpload::make('image')
                     ->image()
+                    ->imageEditor()
                     ->required(),
+
+                Forms\Components\Select::make('service_id')
+                    ->relationship('service', 'sort_name')
+                    ->required(),
+
             ]);
     }
 
@@ -39,6 +54,8 @@ class PartnerResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->searchable(),
                 Tables\Columns\ImageColumn::make('image'),
+                Tables\Columns\TextColumn::make('service.sort_name')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

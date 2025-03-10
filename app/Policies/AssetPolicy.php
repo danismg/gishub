@@ -3,10 +3,10 @@
 namespace App\Policies;
 
 use App\Models\User;
-use App\Models\Certificate;
+use App\Models\Asset;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
-class CertificatePolicy
+class AssetPolicy
 {
     use HandlesAuthorization;
 
@@ -15,15 +15,15 @@ class CertificatePolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_certificate');
+        return $user->can('view_any_asset');
     }
 
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, Certificate $certificate): bool
+    public function view(User $user, Asset $asset): bool
     {
-        return $user->can('view_certificate');
+        return $user->can('view_asset');
     }
 
     /**
@@ -31,23 +31,23 @@ class CertificatePolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_certificate');
+        return $user->can('create_asset');
     }
 
     /**
      * Determine whether the user can update the model.
      */
-    public function update(User $user, Certificate $certificate): bool
+    public function update(User $user, Asset $asset): bool
     {
-        return $user->can('update_certificate');
+        return $user->can('update_asset');
     }
 
     /**
      * Determine whether the user can delete the model.
      */
-    public function delete(User $user, Certificate $certificate): bool
+    public function delete(User $user, Asset $asset): bool
     {
-        return $user->can('delete_certificate');
+        return $user->can('delete_asset');
     }
 
     /**
@@ -55,15 +55,15 @@ class CertificatePolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_certificate');
+        return $user->can('delete_any_asset');
     }
 
     /**
      * Determine whether the user can permanently delete.
      */
-    public function forceDelete(User $user, Certificate $certificate): bool
+    public function forceDelete(User $user, Asset $asset): bool
     {
-        return $user->can('force_delete_certificate');
+        return $user->can('force_delete_asset');
     }
 
     /**
@@ -71,15 +71,15 @@ class CertificatePolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_certificate');
+        return $user->can('force_delete_any_asset');
     }
 
     /**
      * Determine whether the user can restore.
      */
-    public function restore(User $user, Certificate $certificate): bool
+    public function restore(User $user, Asset $asset): bool
     {
-        return $user->can('restore_certificate');
+        return $user->can('restore_asset');
     }
 
     /**
@@ -87,15 +87,15 @@ class CertificatePolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_certificate');
+        return $user->can('restore_any_asset');
     }
 
     /**
      * Determine whether the user can replicate.
      */
-    public function replicate(User $user, Certificate $certificate): bool
+    public function replicate(User $user, Asset $asset): bool
     {
-        return $user->can('replicate_certificate');
+        return $user->can('replicate_asset');
     }
 
     /**
@@ -103,6 +103,6 @@ class CertificatePolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_certificate');
+        return $user->can('reorder_asset');
     }
 }

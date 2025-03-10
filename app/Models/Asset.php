@@ -13,6 +13,7 @@ class Asset extends Model
     protected $fillable = [
         'code',
         'category',
+        'isCheck',
         'name',
         'brand',
         'total',

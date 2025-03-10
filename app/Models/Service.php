@@ -15,10 +15,22 @@ class Service extends Model
         'name',
         'sort_name',
         'image',
+        'certificate',
+        'code',
     ];
 
     public function clients(): HasMany
     {
         return $this->hasMany(Client::class);
+    }
+
+    public function partners(): HasMany
+    {
+        return $this->hasMany(Partner::class);
+    }
+
+    public function reports(): HasMany
+    {
+        return $this->hasMany(Report::class);
     }
 }

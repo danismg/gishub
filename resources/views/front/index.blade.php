@@ -256,12 +256,11 @@
                     <div class="py-8 px-4 mx-auto max-w-screen-xl lg:py-16 ">
                         <div class="mx-auto max-w-screen-sm text-center mb-8 lg:mb-16">
                             <h2 class="mb-4 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white">
-                                Our Team
+                                Top Performers
                             </h2>
                             <p class="font-light text-gray-500 lg:mb-16 sm:text-xl dark:text-gray-400">
-                                Our team is a group of passionate professionals dedicated to
-                                innovation, collaboration, and excellence to drive meaningful
-                                impact.
+                                Our team values innovation, collaboration, and excellence, honoring four top employees each
+                                month for their impact.
                             </p>
                         </div>
                         <div class="grid gap-8 mb-6 lg:mb-16 md:grid-cols-2">

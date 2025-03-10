@@ -39,11 +39,14 @@ class UserResource extends Resource
                 ->password()
                 ->dehydrateStateUsing(fn(string $state): string => Hash::make($state))->dehydrated(fn(?string $state): bool => filled($state))
                 ->required(fn(Page $livewire): bool => $livewire instanceof CreateRecord),
+
             FileUpload::make('avatar_url')
                 ->image()
+                // image will be stored in 'storage/app/public/avatars
                 ->disk('public')
-                ->directory('avatar_url') // Set the directory for image uploads
-                ->rules('mimes:jpeg,png|max:1024'), // Only accept jpeg and png files with a maximum size of 1MB
+                // ->required()
+                ->rules('mimes:jpeg,png|max:1024') // Only accept jpeg and png files with a maximum size of 1MB
+                ->required(fn(Page $livewire): bool => $livewire instanceof CreateRecord || $livewire instanceof EditRecord),
 
 
             Select::make('roles')

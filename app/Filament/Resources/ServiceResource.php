@@ -6,6 +6,7 @@ use App\Filament\Resources\ServiceResource\Pages;
 use App\Filament\Resources\ServiceResource\RelationManagers;
 use App\Models\Service;
 use Filament\Forms;
+use Filament\Forms\Components\Grid;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -21,16 +22,29 @@ class ServiceResource extends Resource
 
     protected static ?string $navigationGroup = 'Management';
 
+
+    protected static ?string $navigationLabel = 'Our Services';
+
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')
-                    ->required(),
-                Forms\Components\TextInput::make('sort_name')
-                    ->required(),
+
+                Grid::make()
+                    ->schema([
+                        Forms\Components\TextInput::make('name')
+                            ->required(),
+                        Forms\Components\TextInput::make('sort_name')
+                            ->required(),
+                        Forms\Components\TextInput::make('code')
+                    ]),
                 Forms\Components\FileUpload::make('image')
                     ->image()
+                    ->imageEditor()
+                    ->required(),
+                Forms\Components\FileUpload::make('certificate')
+                    ->image()
+                    ->imageEditor()
                     ->required(),
             ]);
     }
@@ -44,6 +58,11 @@ class ServiceResource extends Resource
                 Tables\Columns\TextColumn::make('sort_name')
                     ->searchable(),
                 Tables\Columns\ImageColumn::make('image'),
+                Tables\Columns\ImageColumn::make('certificate')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('code')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

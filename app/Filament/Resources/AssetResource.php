@@ -6,6 +6,7 @@ use App\Enums\AssetStatus;
 use App\Filament\Resources\AssetResource\Pages;
 use App\Filament\Resources\AssetResource\RelationManagers;
 use App\Models\Asset;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -20,10 +21,13 @@ class AssetResource extends Resource
 
     protected static ?string $navigationGroup = 'Management';
 
+    protected static ?string $navigationLabel = 'Asset Office';
+
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     public static function form(Form $form): Form
     {
+        $user = User::all()->count();
         return $form
             ->schema([
                 Forms\Components\TextInput::make('code')
@@ -38,18 +42,21 @@ class AssetResource extends Resource
                 Forms\Components\TextInput::make('brand')
                     ->maxLength(255)
                     ->default(null),
-                Forms\Components\TextInput::make('total')
-                    ->maxLength(255)
-                    ->default(null),
                 Forms\Components\Select::make('status')
                     ->options(AssetStatus::class)
                     ->required(),
+                Forms\Components\TextInput::make('total')
+                    ->maxLength(255)
+                    ->default(null),
                 Forms\Components\TextInput::make('user')
                     ->maxLength(255)
                     ->default(null),
                 Forms\Components\TextInput::make('noted')
                     ->maxLength(255)
                     ->default(null),
+                // ischeck
+                Forms\Components\Toggle::make('is_check')
+                    ->default(false),
             ]);
     }
 
@@ -65,6 +72,9 @@ class AssetResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()->sortable(),
+                Tables\Columns\ToggleColumn::make('isCheck')
+                    ->label('Check')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('brand')
                     ->searchable()->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),

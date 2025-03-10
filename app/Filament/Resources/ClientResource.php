@@ -21,6 +21,8 @@ class ClientResource extends Resource
 
     protected static ?string $navigationGroup = 'Management';
 
+    protected static ?string $navigationLabel = 'Our Clients';
+
     public static function form(Form $form): Form
     {
         return $form
@@ -33,7 +35,7 @@ class ClientResource extends Resource
                     ->image()
                     ->required(),
                 Forms\Components\Select::make('service_id')
-                    ->relationship('service', 'name')
+                    ->relationship('service', 'sort_name')
                     ->required(),
             ]);
     }
@@ -47,7 +49,7 @@ class ClientResource extends Resource
                 Tables\Columns\TextColumn::make('location')
                     ->searchable(),
                 Tables\Columns\ImageColumn::make('image'),
-                Tables\Columns\TextColumn::make('service.name')
+                Tables\Columns\TextColumn::make('service.sort_name')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')

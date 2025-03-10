@@ -20,8 +20,9 @@ class Event extends Model
         'startDateTime',
         'endDateTime',
         'attendees',
-        'google_calendar_event_id',
         'user_id',
+        'file',
+        'google_calendar_event_id',
     ];
 
 

@@ -25,7 +25,8 @@ use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Joaopaulolndev\FilamentEditProfile\FilamentEditProfilePlugin;
 use Filament\Navigation\MenuItem;
 use Joaopaulolndev\FilamentEditProfile\Pages\EditProfilePage;
-
+use App\Filament\Resources\StudentResource\Widgets\StatsOverview;
+use App\Filament\Resources\UserResource\Widgets\StatsOverview as WidgetsStatsOverview;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -39,6 +40,12 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Amber,
             ])
+            ->brandName('GisHub')
+            ->widgets([
+                WidgetsStatsOverview::class
+            ])
+            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
+
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
@@ -57,10 +64,7 @@ class AdminPanelProvider extends PanelProvider
             ->favicon(asset('img/logo_gis.png'))
             ->brandLogoHeight('2rem')
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
-            ->widgets([
-                Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
-            ])
+
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -73,9 +77,7 @@ class AdminPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
             ->plugins([
-                FilamentFullCalendarPlugin::make()
-                    ->selectable()
-                    ->editable(),
+
                 FilamentMediaManagerPlugin::make(),
                 FilamentShieldPlugin::make(),
                 FilamentEditProfilePlugin::make()
@@ -93,7 +95,10 @@ class AdminPanelProvider extends PanelProvider
                         value: true,
                         directory: 'avatar_url', // image will be stored in 'storage/app/public/avatars
                         rules: 'mimes:jpeg,png|max:1024' //only accept jpeg and png files with a maximum size of 1MB
-                    )
+                    ),
+                FilamentFullCalendarPlugin::make()
+                    ->selectable()
+                    ->editable(),
 
             ])
             ->userMenuItems([

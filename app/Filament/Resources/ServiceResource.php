@@ -30,23 +30,31 @@ class ServiceResource extends Resource
         return $form
             ->schema([
 
-                Grid::make()
+                Forms\Components\Section::make()
                     ->schema([
                         Forms\Components\TextInput::make('name')
                             ->required(),
                         Forms\Components\TextInput::make('sort_name')
                             ->required(),
-                        Forms\Components\TextInput::make('code')
-                    ]),
-                Forms\Components\FileUpload::make('image')
-                    ->image()
-                    ->imageEditor()
-                    ->required(),
-                Forms\Components\FileUpload::make('certificate')
-                    ->image()
-                    ->imageEditor()
-                    ->required(),
-            ]);
+                        Forms\Components\FileUpload::make('image')
+                            ->image()
+                            ->imageEditor()
+                            ->required()
+                            ->columnSpan(2),
+                    ])
+                    ->columns(2)
+                    ->columnSpan(['lg' => fn(?Service $record) => $record === null ? 2 : 2]),
+                Forms\Components\Section::make()
+                    ->schema([
+                        Forms\Components\TextInput::make('code'),
+                        Forms\Components\FileUpload::make('certificate')
+                            ->image()
+                            ->imageEditor()
+                    ])
+                    ->columnSpan(['lg' => 1]),
+                // ->hidden(fn(?Event $record) => $record === null),
+
+            ])->columns(3);
     }
 
     public static function table(Table $table): Table
@@ -81,6 +89,7 @@ class ServiceResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

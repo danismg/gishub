@@ -28,34 +28,43 @@ class UserResource extends Resource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            TextInput::make('name')
-                ->required()
-                ->maxLength(255),
-
-            TextInput::make('email')
-                ->email()
-                ->required(),
-            TextInput::make('password')
-                ->password()
-                ->dehydrateStateUsing(fn(string $state): string => Hash::make($state))->dehydrated(fn(?string $state): bool => filled($state))
-                ->required(fn(Page $livewire): bool => $livewire instanceof CreateRecord),
-
-            FileUpload::make('avatar_url')
-                ->image()
-                // image will be stored in 'storage/app/public/avatars
-                ->disk('public')
-                // ->required()
-                ->rules('mimes:jpeg,png|max:1024') // Only accept jpeg and png files with a maximum size of 1MB
-                ->required(fn(Page $livewire): bool => $livewire instanceof CreateRecord || $livewire instanceof EditRecord),
+            Forms\Components\Section::make()
+                ->schema([
+                    TextInput::make('name')
+                        ->required()
+                        ->maxLength(255),
+                    TextInput::make('password')
+                        ->password()
+                        ->dehydrateStateUsing(fn(string $state): string => Hash::make($state))->dehydrated(fn(?string $state): bool => filled($state))
+                        ->required(fn(Page $livewire): bool => $livewire instanceof CreateRecord),
+                    TextInput::make('email')
+                        ->email()
+                        ->required(),
+                    Select::make('roles')
+                        ->relationship('roles', 'name'),
 
 
-            Select::make('roles')
-                ->relationship('roles', 'name'),
+                    FileUpload::make('avatar_url')
+                        ->image()
+                        ->disk('public')
+                        ->rules('mimes:jpeg,png')
+                        ->columnSpan(2)
+                        ->required(fn(Page $livewire): bool => $livewire instanceof CreateRecord || $livewire instanceof EditRecord),
+                ])
+                ->columns(2)
+                ->columnSpan(['lg' => fn(?User $record) => $record === null ? 2 : 2]),
+            Forms\Components\Section::make()
+                ->schema([
+                    TextInput::make('link_facebook')->label('Link Facebook'),
+                    TextInput::make('link_instagram')->label('Link Instagram'),
+                    TextInput::make('link_twitter')->label('Link Twitter'),
+                ])
+                // label
+                ->label('Social Media')
+                ->columnSpan(['lg' => 1]),
 
-            TextInput::make('link_facebook')->label('Link Facebook'),
-            TextInput::make('link_instagram')->label('Link Instagram'),
-            TextInput::make('link_twitter')->label('Link Twitter'),
-        ]);
+
+        ])->columns(3);
     }
 
     public static function table(Table $table): Table
@@ -76,6 +85,7 @@ class UserResource extends Resource
                 ->circular(),
         ])->actions([
             Tables\Actions\EditAction::make(),
+            Tables\Actions\DeleteAction::make(),
         ])->bulkActions([
             Tables\Actions\BulkActionGroup::make([
                 Tables\Actions\DeleteBulkAction::make(),

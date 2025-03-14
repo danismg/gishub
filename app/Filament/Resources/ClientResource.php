@@ -27,17 +27,32 @@ class ClientResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')
-                    ->required(),
-                Forms\Components\TextInput::make('location')
-                    ->required(),
-                Forms\Components\FileUpload::make('image')
-                    ->image()
-                    ->required(),
-                Forms\Components\Select::make('service_id')
-                    ->relationship('service', 'sort_name')
-                    ->required(),
-            ]);
+                Forms\Components\Section::make()
+                    ->schema([
+                        Forms\Components\TextInput::make('name')
+                            ->required(),
+                        Forms\Components\TextInput::make('location')
+                            ->required(),
+                        Forms\Components\FileUpload::make('image')
+                            ->image()
+                            ->columnSpan(2)
+                            ->required(),
+                    ])
+                    ->columns(2)
+                    ->columnSpan(['lg' => fn(?CLient $record) => $record === null ? 2 : 2]),
+                Forms\Components\Section::make()
+                    ->schema([
+
+                        Forms\Components\Select::make('service_id')
+                            ->relationship('service', 'sort_name')
+                            ->required(),
+
+                    ])
+                    ->label('Social Media')
+                    ->columnSpan(['lg' => 1]),
+
+
+            ])->columns(3);
     }
 
     public static function table(Table $table): Table
@@ -70,6 +85,7 @@ class ClientResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

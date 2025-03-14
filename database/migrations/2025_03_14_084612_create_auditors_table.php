@@ -13,17 +13,8 @@ return new class extends Migration
     {
         Schema::create('auditors', function (Blueprint $table) {
             $table->id();
-            $table->string('company_name');
-            $table->dateTime('tanggal_audit');
-            $table->dateTime('tanggal_terbit');
-            $table->string('location');
-            $table->string('laboratorium');
-            $table->string('auditor');
-
-            $table->foreignId('service_id')->constrained()->onDelete('cascade');
-
-            // services
-            $table->softDeletes();
+            $table->foreignId('event_id')->constrained()->onDelete('cascade');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });
     }

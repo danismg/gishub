@@ -7,8 +7,7 @@ use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Auth;
 
 class DocumentRelationManager extends RelationManager
 {
@@ -16,9 +15,11 @@ class DocumentRelationManager extends RelationManager
 
     public function form(Form $form): Form
     {
+        $user = Auth::user();
+        $isMember = $user->roles()->where('name', 'member')->exists();
+
         return $form
             ->schema([
-                // persyaratan, file, status [enum panding, approved, rejected]
                 Forms\Components\Textarea::make('persyaratan')
                     ->required()
                     ->maxLength(255),
@@ -28,10 +29,16 @@ class DocumentRelationManager extends RelationManager
                         'approved' => 'Approved',
                         'rejected' => 'Rejected',
                     ])
+                    ->disabled($isMember)
                     ->required(),
                 Forms\Components\FileUpload::make('file')
                     ->required()
                     ->columnSpan(2),
+                // noted
+                Forms\Components\Textarea::make('noted')
+                    ->required()
+                    ->disabled($isMember)
+                    ->maxLength(255),
 
             ]);
     }
@@ -49,14 +56,19 @@ class DocumentRelationManager extends RelationManager
                         'pending' => 'Pending',
                         'approved' => 'Approved',
                         'rejected' => 'Rejected',
-                    ]),
+                    ])
+                    ->disabled(fn() => Auth::user()->roles()->where('name', 'member')->exists()),
+                Tables\Columns\TextColumn::make('noted')
+                    ->limit(10)
+                    ->default('Null')
+                    ->searchable()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('file')
                     ->label('Download')
                     ->formatStateUsing(fn($state) => $state ? 'Download' : 'No File')
                     ->url(fn($record) => $record->file ? asset('storage/' . $record->file) : '#', true)
-                    ->icon('heroicon-o-arrow-down-tray') // Ganti dengan ikon yang tersedia
+                    ->icon('heroicon-o-arrow-down-tray')
                     ->openUrlInNewTab(),
-
             ])
             ->filters([
                 //
@@ -65,7 +77,7 @@ class DocumentRelationManager extends RelationManager
                 Tables\Actions\CreateAction::make(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
+                // Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])

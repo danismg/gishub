@@ -16,6 +16,8 @@ return new class extends Migration
             $table->string('persyaratan');
             $table->string('file');
             $table->string('status')->default('pending');
+            // noted
+            $table->text('noted')->nullable();
 
 
             // auditors

@@ -25,48 +25,86 @@ class CalendarWidget extends FullCalendarWidget
 
     public function fetchEvents(array $fetchInfo): array
     {
-        // Ambil event dari Google Calendar melalui Spatie
         $googleEvents = GoogleCalendarEvent::get();
-        // $googleEvents = GoogleCalendarEvent::get();
         // dd($googleEvents);
-        foreach ($googleEvents as $googleEvent) {
-            $existingEvent = Event::where('google_calendar_event_id', $googleEvent->id)->first();
+        $user = auth()->user();
 
-            if ($existingEvent) {
-                $existingEvent->update([
-                    'name' => $googleEvent->summary,
-                    'colorId' => '#' . substr(md5($googleEvent->summary), 0, 6),
-                    'startDateTime' => Carbon::parse($googleEvent->start->dateTime ?? $googleEvent->start->date)->format('Y-m-d H:i:s'),
-                    'endDateTime' => Carbon::parse($googleEvent->end->dateTime ?? $googleEvent->end->date)->format('Y-m-d H:i:s'),
-                ]);
-            } else {
-                Event::create([
-                    'google_calendar_event_id' => $googleEvent->id,
-                    'name' => $googleEvent->summary,
-                    // color random
-                    'colorId' => '#' . substr(md5($googleEvent->summary), 0, 6),
-                    'startDateTime' => Carbon::parse($googleEvent->start->dateTime ?? $googleEvent->start->date)->format('Y-m-d H:i:s'),
-                    'endDateTime' => Carbon::parse($googleEvent->end->dateTime ?? $googleEvent->end->date)->format('Y-m-d H:i:s'),
-                ]);
+        if ($user->hasRole('Admin') || $user->hasRole('Teknis')) {
+            foreach ($googleEvents as $googleEvent) {
+                $existingEvent = Event::where('google_calendar_event_id', $googleEvent->id)->first();;
+                if ($existingEvent) {
+                    $existingEvent->update([
+                        'name' => $googleEvent->summary,
+                        'colorId' => '#' . substr(md5($googleEvent->summary), 0, 6),
+                        'startDateTime' => Carbon::parse($googleEvent->start->dateTime ?? $googleEvent->start->date)->format('Y-m-d H:i:s'),
+                        'endDateTime' => Carbon::parse($googleEvent->end->dateTime ?? $googleEvent->end->date)->format('Y-m-d H:i:s'),
+                    ]);
+                    $teknisUsers = \App\Models\User::whereHas('roles', function ($query) {
+                        $query->where('name', 'teknis');
+                    })->pluck('id')->toArray();
+
+                    if (!empty($teknisUsers)) {
+                        $existingEvent->users()->attach($teknisUsers);
+                    }
+                } else {
+                    $event = Event::create([
+                        'google_calendar_event_id' => $googleEvent->id,
+                        'name' => $googleEvent->summary,
+                        'colorId' => '#' . substr(md5($googleEvent->summary), 0, 6),
+                        'startDateTime' => Carbon::parse($googleEvent->start->dateTime ?? $googleEvent->start->date)->format('Y-m-d H:i:s'),
+                        'endDateTime' => Carbon::parse($googleEvent->end->dateTime ?? $googleEvent->end->date)->format('Y-m-d H:i:s'),
+                    ]);
+
+                    $teknisUsers = \App\Models\User::whereHas('roles', function ($query) {
+                        $query->where('name', 'teknis');
+                    })->pluck('id')->toArray();
+
+                    if (!empty($teknisUsers)) {
+                        $event->users()->attach($teknisUsers);
+                    }
+                }
             }
         }
 
-        return Event::query()
-            ->where('startDateTime', '>=', $fetchInfo['start'])
-            ->where('endDateTime', '<=', $fetchInfo['end'])
-            ->get()
-            ->map(
-                fn(Event $event) => [
-                    'id' => $event->id,
-                    'title' => $event->name,
-                    'color' => $event->colorId,
-                    'start' => $event->startDateTime,
-                    'end' => $event->endDateTime,
-                    'url' => EventResource::getUrl(name: 'edit', parameters: ['record' => $event]),
-                    'shouldOpenUrlInNewTab' => false,
-                ]
-            )
-            ->all();
+        // jika user adlaah admin ambil semua event database
+        if ($user->hasRole('Admin')) {
+            return Event::query()
+                ->where('startDateTime', '>=', $fetchInfo['start'])
+                ->where('endDateTime', '<=', $fetchInfo['end'])
+                ->get()
+                ->map(
+                    fn(Event $event) => [
+                        'id' => $event->id,
+                        'title' => $event->name,
+                        'color' => $event->colorId,
+                        'start' => $event->startDateTime,
+                        'end' => $event->endDateTime,
+                        'url' => EventResource::getUrl(name: 'edit', parameters: ['record' => $event]),
+                        'shouldOpenUrlInNewTab' => false,
+                    ]
+                )
+                ->all();
+        } else {
+            return Event::query()
+                ->where('startDateTime', '>=', $fetchInfo['start'])
+                ->where('endDateTime', '<=', $fetchInfo['end'])
+                ->whereHas('users', function ($query) {
+                    $query->where('user_id', auth()->id());
+                })
+                ->get()
+                ->map(
+                    fn(Event $event) => [
+                        'id' => $event->id,
+                        'title' => $event->name,
+                        'color' => $event->colorId,
+                        'start' => $event->startDateTime,
+                        'end' => $event->endDateTime,
+                        'url' => EventResource::getUrl(name: 'edit', parameters: ['record' => $event]),
+                        'shouldOpenUrlInNewTab' => false,
+                    ]
+                )
+                ->all();
+        }
     }
 
     public function getFormSchema(): array

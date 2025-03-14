@@ -20,11 +20,17 @@ class Report extends Model
         'laboratorium',
         'auditor',
         'service_id',
+        'event_id',
     ];
 
     public function docAudits(): HasMany
     {
         return $this->hasMany(DocAudit::class);
+    }
+
+    public function event(): BelongsTo
+    {
+        return $this->belongsTo(Event::class);
     }
 
     public function service(): BelongsTo

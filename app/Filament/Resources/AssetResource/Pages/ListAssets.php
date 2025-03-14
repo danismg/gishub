@@ -13,6 +13,7 @@ use Filament\Resources\Pages\ListRecords;
 use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\Calculation\Category;
+use Illuminate\Support\Facades\DB;
 
 
 class ListAssets extends ListRecords
@@ -43,14 +44,18 @@ class ListAssets extends ListRecords
     public function getTabs(): array
     {
         $data = [];
+        $data['All'] = Tab::make("All (" . Asset::count() . ")")
+            ->modifyQueryUsing(fn(Builder $query) => $query);
+        $categories = Asset::select('category', DB::raw('COUNT(*) as total'))
+            ->groupBy('category')
+            ->orderBy('category')
+            ->get();
 
-        // all
-        $data['All'] = Tab::make('All');
-
-        $categories = Asset::orderBy('category')->get();
         foreach ($categories as $cat) {
-            $data[$cat->category] = Tab::make($cat->category)->modifyQueryUsing(fn(Builder $query) => $query->where('category', $cat->category));
+            $data[$cat->category] = Tab::make("{$cat->category} ({$cat->total})")
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('category', $cat->category));
         }
+
         return $data;
     }
 }

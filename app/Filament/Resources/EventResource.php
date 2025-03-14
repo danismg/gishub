@@ -3,8 +3,8 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\EventResource\Pages;
-use App\Filament\Resources\EventResource\RelationManagers;
 use App\Models\Event;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Form;
@@ -12,12 +12,11 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Auth;
 
 class EventResource extends Resource
 {
     protected static ?string $model = Event::class;
-
 
     protected static ?string $navigationGroup = 'Management';
 
@@ -27,22 +26,45 @@ class EventResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\ColorPicker::make('colorId')
-                    ->required(),
-                Forms\Components\DateTimePicker::make('startDateTime')
-                    ->required(),
-                Forms\Components\DateTimePicker::make('endDateTime')
-                    ->required(),
-                Forms\Components\Select::make('users')
-                    ->relationship('users', 'name')
-                    ->multiple(),
+                Forms\Components\Section::make()
+                    ->schema([
+                        Forms\Components\TextInput::make('name')
+                            ->required()
+                            ->maxLength(255),
 
-                FileUpload::make('file')
-                // ->required(),
-            ]);
+                        Forms\Components\ColorPicker::make('colorId')
+                            ->required(),
+                        Forms\Components\Select::make('users')
+                            ->relationship('users', 'name')
+                            ->multiple()
+                            ->disabled()
+                            // ->hidden()
+                            ->default(function () {
+                                $user = Auth::user();
+                                $isTeknis = $user->roles()->where('name', 'Teknis')->exists();
+                                if ($isTeknis) {
+                                    $defaultUsers = User::whereHas('roles', function ($query) {
+                                        $query->whereIn('name', ['Teknis', 'Admin']);
+                                    })->pluck('id')->toArray();
+
+                                    return array_merge($defaultUsers, [$user->id]);
+                                }
+                                return [$user->id];
+                            }),
+                        FileUpload::make('file'),
+                    ])
+                    ->columns(2)
+                    ->columnSpan(['lg' => fn(?Event $record) => $record === null ? 2 : 2]),
+                Forms\Components\Section::make('Timeline')
+                    ->schema([
+                        Forms\Components\DateTimePicker::make('startDateTime')
+                            ->required(),
+                        Forms\Components\DateTimePicker::make('endDateTime')
+                            ->required(),
+                    ])
+                    ->columnSpan(['lg' => 1])
+            ])
+            ->columns(3);
     }
 
     public static function table(Table $table): Table
@@ -68,18 +90,23 @@ class EventResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->filters([
-                //
-            ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                Tables\Actions\DeleteBulkAction::make(),
             ]);
     }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->whereHas('users', function ($query) {
+                $query->where('user_id', Auth::id());
+            });
+    }
+
 
     public static function getRelations(): array
     {
@@ -87,9 +114,6 @@ class EventResource extends Resource
             //
         ];
     }
-
-    // buatlah belongsToMany(User::class, 'event_user', 'event_id', 'user_id') terhubung dnegna tabel pivot event_user
-
 
     public static function getPages(): array
     {

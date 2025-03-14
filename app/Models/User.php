@@ -78,6 +78,12 @@ class User extends Authenticatable implements HasAvatar
     {
         return $this->belongsToMany(Event::class, 'event_user', 'user_id', 'event_id');
     }
+
+    // public function (): BelongsToMany
+    // {
+    //     return $this->belongsToMany(Event::class, 'event_user', 'user_id', 'event_id');
+    // }
+
     public function getFilamentAvatarUrl(): ?string
     {
         return $this->avatar_url ? Storage::url($this->avatar_url) : null;

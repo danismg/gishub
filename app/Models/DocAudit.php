@@ -13,9 +13,10 @@ class DocAudit extends Model
 
     protected $fillable = [
         'persyaratan',
+        'noted',
         'file',
         'status',
-        'auditor_id',
+        'report_id',
     ];
 
     public function report(): BelongsTo

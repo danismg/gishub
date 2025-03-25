@@ -7,8 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Spatie\GoogleCalendar\Event as GoogleCalendarEvent;
-use Illuminate\Support\Facades\Auth;
 
 class Event extends Model
 {
@@ -22,16 +20,32 @@ class Event extends Model
         'endDateTime',
         'attendees',
         'file',
+        'startDateAudit',
+        'endDateAudit',
         'google_calendar_event_id',
     ];
 
-    protected static function boot()
+    protected static function booted()
     {
-        parent::boot();
+        static::saved(fn($event) => $event->syncUsers());
+        static::created(fn($event) => $event->syncUsers());
+        static::updated(fn($event) => $event->syncUsers());
+    }
 
-        static::created(function ($event) {
-            $event->users()->attach(Auth::id());
-        });
+    /**
+     * Sinkronisasi auditor dan user ke event_user.
+     */
+    public function syncUsers()
+    {
+        $auditorUsers = $this->auditor()->pluck('users.id')->toArray();
+
+        $roleUsers = User::whereHas('roles', function ($query) {
+            $query->whereIn('name', ['Teknis', 'Admin']);
+        })->pluck('id')->toArray();
+
+        $allUsers = array_unique(array_merge($auditorUsers, $roleUsers));
+
+        $this->users()->sync($allUsers);
     }
 
     public function reports(): HasMany
@@ -41,14 +55,11 @@ class Event extends Model
 
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'auditors', 'event_id', 'user_id')->withTimestamps();
+        return $this->belongsToMany(User::class, 'event_user', 'event_id', 'user_id')->withTimestamps();
     }
-    public function audit(): BelongsToMany
+
+    public function auditor(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'auditors', 'event_id', 'user_id')->withTimestamps();
     }
-
-    protected $casts = [
-        'user_id' => 'array',
-    ];
 }

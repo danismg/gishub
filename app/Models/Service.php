@@ -33,4 +33,9 @@ class Service extends Model
     {
         return $this->hasMany(Report::class);
     }
+
+    public function scopes(): HasMany
+    {
+        return $this->hasMany(Scope::class);
+    }
 }

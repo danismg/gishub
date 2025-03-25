@@ -17,9 +17,7 @@ use Illuminate\Support\Facades\Auth;
 class EventResource extends Resource
 {
     protected static ?string $model = Event::class;
-
     protected static ?string $navigationGroup = 'Management';
-
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     public static function form(Form $form): Form
@@ -30,65 +28,121 @@ class EventResource extends Resource
                     ->schema([
                         Forms\Components\TextInput::make('name')
                             ->required()
-                            ->maxLength(255),
+                            ->maxLength(255)
+                            ->columnSpan(2),
 
                         Forms\Components\ColorPicker::make('colorId')
-                            ->required(),
-                        Forms\Components\Select::make('users')
+                            ->required()
+                            ->columnSpan(2),
+
+                        Forms\Components\Select::make('users') // Sesuai dengan relasi event_user
                             ->relationship('users', 'name')
                             ->multiple()
+                            ->label('Access')
                             ->disabled()
-                            // ->hidden()
-                            ->default(function () {
-                                $user = Auth::user();
-                                $isTeknis = $user->roles()->where('name', 'Teknis')->exists();
-                                if ($isTeknis) {
-                                    $defaultUsers = User::whereHas('roles', function ($query) {
-                                        $query->whereIn('name', ['Teknis', 'Admin']);
-                                    })->pluck('id')->toArray();
-
-                                    return array_merge($defaultUsers, [$user->id]);
-                                }
-                                return [$user->id];
-                            }),
-                        FileUpload::make('file'),
+                            ->default(fn() => self::getDefaultAccess()),
+                        Forms\Components\Select::make('auditor_ids') // Sesuai dengan database
+                            ->relationship('auditor', 'name')
+                            ->multiple()
+                            ->live()
+                            ->afterStateUpdated(fn($state, callable $set) => self::updateAccessField($state, $set)),
+                        FileUpload::make('file')
+                            ->label('Documentation')
+                            ->columnSpan(2),
                     ])
                     ->columns(2)
-                    ->columnSpan(['lg' => fn(?Event $record) => $record === null ? 2 : 2]),
-                Forms\Components\Section::make('Timeline')
+                    ->columnSpan(['lg' => 2]),
+
+                Forms\Components\Group::make()
                     ->schema([
-                        Forms\Components\DateTimePicker::make('startDateTime')
-                            ->required(),
-                        Forms\Components\DateTimePicker::make('endDateTime')
-                            ->required(),
+                        Forms\Components\Section::make('Audit Schedule (Sync with Calendar)')
+                            ->schema([
+                                Forms\Components\DateTimePicker::make('startDateTime')
+                                    ->label('Start')
+                                    ->required(),
+                                Forms\Components\DateTimePicker::make('endDateTime')
+                                    ->label('End')
+                                    ->required(),
+                            ]),
+                        Forms\Components\Section::make("Audit Day's")
+                            ->schema([
+                                Forms\Components\DateTimePicker::make('startDateAudit')
+                                    ->label('Start')
+                                    ->required()
+                                    ->default(fn($get) => $get('startDateTime'))
+                                    ->minDate(fn($get) => $get('startDateTime'))
+                                    ->maxDate(fn($get) => $get('endDateTime')),
+                                Forms\Components\DateTimePicker::make('endDateAudit')
+                                    ->label('End')
+                                    ->required()
+                                    ->default(fn($get) => $get('endDateTime'))
+                                    ->minDate(fn($get) => $get('startDateTime'))
+                                    ->maxDate(fn($get) => $get('endDateTime'))
+
+                            ]),
                     ])
                     ->columnSpan(['lg' => 1])
             ])
             ->columns(3);
     }
 
+    private static function updateAccessField($auditorIds, callable $set)
+    {
+        $user = Auth::user();
+        $auditorUsers = is_array($auditorIds) ? User::whereIn('id', $auditorIds)->pluck('id')->toArray() : [];
+
+        $roleUsers = User::whereHas('roles', function ($query) {
+            $query->whereIn('name', ['Teknis', 'Admin']);
+        })->pluck('id')->toArray();
+
+        $accessUsers = array_unique(array_merge($auditorUsers, $roleUsers, [$user->id]));
+
+        $set('users', $accessUsers);
+    }
+
+    protected static function getDefaultAccess(): array
+    {
+        $user = Auth::user();
+        $roleUsers = User::whereHas('roles', function ($query) {
+            $query->whereIn('name', ['Teknis', 'Admin']);
+        })->pluck('id')->toArray();
+
+        $eventId = request()->route('record');
+        $auditorUsers = $eventId ? Event::find($eventId)?->auditor()->pluck('users.id')->toArray() ?? [] : [];
+
+        $creatorUser = $eventId ? Event::find($eventId)?->created_by : $user->id;
+
+        return array_unique(array_merge($roleUsers, $auditorUsers, [$user->id, $creatorUser]));
+    }
+
+    // berguna untuk mengatur akses user yang dapat mengakses data
+    // yang dihasilkan oleh resource ini
+    public static function mutateRelationshipDataBeforeCreate(array $data): array
+    {
+        $data['users'] = self::getDefaultAccess();
+        return $data;
+    }
+
+    public static function mutateRelationshipDataBeforeSave(array $data): array
+    {
+        $data['users'] = self::getDefaultAccess();
+        return $data;
+    }
+
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('colorId')
-                    ->searchable(),
+                Tables\Columns\TextColumn::make('name')->searchable(),
+                Tables\Columns\TextColumn::make('colorId')->searchable(),
                 Tables\Columns\TextColumn::make('startDateTime')
-                    ->dateTime()
+                    ->date('d F Y')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('endDateTime')
-                    ->dateTime()
+                    ->date('d F Y')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('updated_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -107,12 +161,9 @@ class EventResource extends Resource
             });
     }
 
-
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array

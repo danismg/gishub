@@ -11,17 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('reports', function (Blueprint $table) {
+        Schema::create('doc_audits', function (Blueprint $table) {
             $table->id();
-            $table->string('company_name');
-            $table->dateTime('tanggal_audit');
-            $table->dateTime('tanggal_terbit');
-            $table->string('location');
-            $table->string('laboratorium');
+            $table->string('persyaratan');
+            $table->string('file');
+            $table->string('status')->default('pending');
+            $table->text('noted')->nullable();
+            $table->foreignId('report_id')->constrained('reports')->onDelete('cascade');
 
-            $table->foreignId('service_id')->constrained()->onDelete('cascade');
-
-            // services
             $table->softDeletes();
             $table->timestamps();
         });
@@ -32,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('reports');
+        Schema::dropIfExists('doc_audits');
     }
 };

@@ -8,7 +8,6 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
-use App\Enums\ReportStatus;
 
 class DocumentRelationManager extends RelationManager
 {
@@ -17,8 +16,6 @@ class DocumentRelationManager extends RelationManager
     public function form(Form $form): Form
     {
         $user = Auth::user();
-        $report = $this->getOwnerRecord()->event;
-        $checkMemberEvent = $report->users()->where('user_id', $user->id)->exists();
         $isMember = $user->roles()->where('name', 'member')->exists();
 
         return $form
@@ -26,60 +23,46 @@ class DocumentRelationManager extends RelationManager
                 Forms\Components\Textarea::make('persyaratan')
                     ->required()
                     ->maxLength(255),
-                // ->disabled($checkMemberEvent),
-
                 Forms\Components\Select::make('status')
                     ->options([
-                        ReportStatus::Pending->value => 'Pending',
-                        ReportStatus::Approved->value => 'Approved',
-                        ReportStatus::Rejected->value => 'Rejected',
+                        'pending' => 'Pending',
+                        'approved' => 'Approved',
+                        'rejected' => 'Rejected',
                     ])
-                    ->default(fn($record) => $record ? $record->status : ReportStatus::Pending->value)
-                    ->disabled($isMember || $checkMemberEvent)
+                    ->disabled($isMember)
                     ->required(),
-
                 Forms\Components\FileUpload::make('file')
                     ->required()
-                    ->directory('uploads')
-                    ->visibility('public')
                     ->columnSpan(2),
-                // ->disabled($checkMemberEvent),
-
+                // noted
                 Forms\Components\Textarea::make('noted')
-                    ->maxLength(255)
-                    ->columnSpan(2),
-                // ->disabled($checkMemberEvent),
+                    ->required()
+                    ->disabled($isMember)
+                    ->maxLength(255),
+
             ]);
     }
 
     public function table(Table $table): Table
     {
-        $user = Auth::user();
-        $report = $this->getOwnerRecord()->event;
-        $checkMemberEvent = $report->users()->where('user_id', $user->id)->exists();
-        // dd($checkMemberEvent);
         return $table
-            ->recordTitleAttribute('persyaratan')
+            ->recordTitleAttribute('name')
             ->columns([
                 Tables\Columns\TextColumn::make('persyaratan')
                     ->searchable(),
-
                 Tables\Columns\SelectColumn::make('status')
                     ->searchable()
                     ->options([
-                        ReportStatus::Pending->value => 'Pending',
-                        ReportStatus::Approved->value => 'Approved',
-                        ReportStatus::Rejected->value => 'Rejected',
+                        'pending' => 'Pending',
+                        'approved' => 'Approved',
+                        'rejected' => 'Rejected',
                     ])
-                    ->width('1/5')
                     ->disabled(fn() => Auth::user()->roles()->where('name', 'member')->exists()),
-
                 Tables\Columns\TextColumn::make('noted')
                     ->limit(10)
                     ->default('Null')
                     ->searchable()
                     ->sortable(),
-
                 Tables\Columns\TextColumn::make('file')
                     ->label('Download')
                     ->formatStateUsing(fn($state) => $state ? 'Download' : 'No File')
@@ -87,24 +70,21 @@ class DocumentRelationManager extends RelationManager
                     ->icon('heroicon-o-arrow-down-tray')
                     ->openUrlInNewTab(),
             ])
-            ->filters([])
-            ->headerActions(
-                $checkMemberEvent ? [
-                    Tables\Actions\CreateAction::make(),
-                ] : []
-            )
-            ->actions(
-                $checkMemberEvent ? [
-                    Tables\Actions\EditAction::make(),
-                    Tables\Actions\DeleteAction::make(),
-                ] : []
-            )
-            ->bulkActions(
-                $checkMemberEvent ? [
-                    Tables\Actions\BulkActionGroup::make([
-                        Tables\Actions\DeleteBulkAction::make(),
-                    ]),
-                ] : []
-            );
+            ->filters([
+                //
+            ])
+            ->headerActions([
+                Tables\Actions\CreateAction::make(),
+            ])
+            ->actions([
+                // Tables\Actions\ViewAction::make(),
+                Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
+            ]);
     }
 }

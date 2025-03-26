@@ -18,6 +18,7 @@ return new class extends Migration
             $table->dateTime('tanggal_terbit');
             $table->string('location');
             $table->string('laboratorium');
+            $table->string('auditor');
 
             $table->foreignId('service_id')->constrained()->onDelete('cascade');
 

@@ -11,10 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('scopes', function (Blueprint $table) {
+        Schema::create('doc_audits', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->foreignId('service_id')->constrained('services')->onDelete('cascade');
+            $table->string('persyaratan');
+            $table->string('file');
+            $table->string('status')->default('pending');
+            // noted
+            $table->text('noted')->nullable();
+
+
+            // auditors
+            $table->foreignId('report_id')->constrained()->onDelete('cascade');
+
             $table->softDeletes();
             $table->timestamps();
         });
@@ -25,6 +33,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('scopes');
+        Schema::dropIfExists('doc_audits');
     }
 };
